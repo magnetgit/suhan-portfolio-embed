@@ -109,6 +109,28 @@
     more.textContent = '전체 포트폴리오 보기 ↗';
     document.body.appendChild(more);
 
+    // 노션 임베드 칸은 약 930px까지만 늘어난다. 내용이 칸보다 길면 칸 안에 맞게 살짝 줄인다(최소 75%).
+    const MIN_ZOOM = 0.75;
+    let fitting = false;
+    const fit = () => {
+      if (fitting) return;
+      fitting = true;
+      document.body.style.zoom = '1';
+      let z = 1;
+      for (let i = 0; i < 6; i++) {
+        const h = document.documentElement.scrollHeight * z;
+        if (h <= innerHeight + 1) break;
+        z = Math.max(MIN_ZOOM, z * innerHeight / h);
+        document.body.style.zoom = String(z);
+        if (z === MIN_ZOOM) break;
+      }
+      fitting = false;
+    };
+    window.addEventListener('resize', fit);
+    main.querySelectorAll('img').forEach(img => { img.loading = 'eager'; img.addEventListener('load', fit); });
+    requestAnimationFrame(fit);
+    if (document.fonts) document.fonts.ready.then(fit);
+
     if (main.querySelector('#tripa-player')) {
       const s = document.createElement('script');
       s.src = 'video.js';
