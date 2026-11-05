@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>이수한 포트폴리오 · 조각 보기</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body.embed { min-height: 0; }
+  body.embed main > section.section,
+  body.embed main > section.hero { padding-top: 28px; padding-bottom: 28px; }
+  body.embed .about-section,
+  body.embed .notes-section { padding: 28px 0; }
+  body.embed .video-section { margin: 0; }
+  body.embed .game-guide { margin: 0; padding: 0; border: 0; }
+  body.embed .game-screens { margin-top: 0; padding-top: 0; }
+  body.embed .embed-wrap { padding-top: 28px; padding-bottom: 28px; }
+  .embed-more { display: block; max-width: 1200px; margin: 0 auto; padding: 0 36px 24px; text-align: right; font-size: 13px; color: inherit; opacity: .7; }
+  .embed-error { padding: 40px 24px; font-family: sans-serif; }
+  .embed-list { max-width: 720px; margin: 40px auto; padding: 0 24px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.9; }
+  .embed-list code { font-size: 13px; }
+</style>
+</head>
+<body class="embed">
+<main id="main"></main>
+<script>
+(() => {
+  // 원본(공개) 사이트 주소. 조각 안의 '#' 링크는 이 주소의 해당 위치를 새 창으로 연다.
+  const FULL_SITE = 'https://suhan-dev-notebook.llsshh1510.chatgpt.site/';
+
+  // 조각 정의: 각 항목은 [선택자, 시작 순번, 끝 순번(포함)] 목록. 순번을 비우면 일치하는 것 전부.
+  const PARTS = {
+    'intro':          { label: '첫 화면', pick: [['section.hero']] },
+    'tripa':          { label: 'TRIPA 소개', pick: [['#projects > .section-heading'], ['article.featured']] },
+    'tripa-update':   { label: 'TRIPA 개선 현황', pick: [['#tripa-update']] },
+    'tripa-video':    { label: 'TRIPA 소개 영상', pick: [['#tripa-video']] },
+    'game':           { label: '스트라타젬 히어로 소개', pick: [['.project-card', 0, 0]] },
+    'game-rules':     { label: '게임 진행 방식', pick: [['#game-guide > .section-heading'], ['#game-guide > .game-guide-grid:not(.game-ending)']] },
+    'game-screens-1': { label: '게임 화면 1', pick: [['.game-screens > .section-heading'], ['.game-screen-list > .game-screen', 0, 1]] },
+    'game-screens-2': { label: '게임 화면 2', pick: [['.game-screen-list > .game-screen', 2, 3]] },
+    'game-screens-3': { label: '게임 화면 3', pick: [['.game-screen-list > .game-screen', 4, 4]] },
+    'game-score':     { label: '게임 점수 계산', pick: [['#game-guide > .game-scoring']] },
+    'game-end':       { label: '게임 마무리·배운 점', pick: [['#game-guide > .game-ending'], ['#game-guide > .game-source-note']] },
+    'cloud-tripa':    { label: 'cloud-tripa', pick: [['#cloud-tripa']] },
+    'pcbang':         { label: 'PC방 관리 DB', pick: [['.project-card', 1, 1]] },
+    'subway':         { label: '지하철 혼잡도 분석', pick: [['article.data-project']] },
+    'about':          { label: '자기소개', pick: [['#about']] },
+    'learning-1':     { label: '학습 여정 1', pick: [['#learning > .section-heading'], ['#learning .timeline > article', 0, 2]] },
+    'learning-2':     { label: '학습 여정 2', pick: [['#learning .timeline > article', 3, 99]] },
+    'notes-1':        { label: '학습 기록 1', pick: [['#notes .section-heading'], ['#notes .notes-grid > *', 0, 'half']] },
+    'notes-2':        { label: '학습 기록 2', pick: [['#notes .notes-grid > *', 'half+1', 99], ['#notes .notes-hint']] },
+  };
+
+  const main = document.getElementById('main');
+  const part = new URLSearchParams(location.search).get('part');
+
+  if (!part || !PARTS[part]) {
+    const base = location.href.split('?')[0];
+    main.innerHTML = '<div class="embed-list"><h1>조각 목록</h1><p>노션 임베드 블록에 아래 주소를 넣으세요.</p><ul>' +
+      Object.entries(PARTS).map(([k, v]) => `<li><a href="?part=${k}">${v.label}</a> — <code>${base}?part=${k}</code></li>`).join('') +
+      '</ul></div>';
+    return;
+  }
+
+  const resolve = (v, total) => {
+    if (v === undefined) return undefined;
+    if (v === 'half') return Math.ceil(total / 2) - 1;
+    if (v === 'half+1') return Math.ceil(total / 2);
+    return v;
+  };
+
+  fetch('index.html').then(r => r.text()).then(html => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const src = doc.querySelector('main');
+    const keep = new Set();
+    for (const [sel, from, to] of PARTS[part].pick) {
+      const all = [...src.querySelectorAll(sel)];
+      const a = resolve(from, all.length) ?? 0;
+      const b = resolve(to, all.length) ?? all.length - 1;
+      all.slice(a, b + 1).forEach(el => keep.add(el));
+    }
+    if (!keep.size) throw new Error('조각을 찾지 못했습니다.');
+
+    // 남길 요소, 그 조상, 그 자손만 두고 나머지는 지운다. 조상의 클래스가 남아 원본 스타일이 그대로 적용된다.
+    const isKept = el => [...keep].some(k => k === el || k.contains(el) || el.contains(k));
+    const prune = el => {
+      for (const child of [...el.children]) {
+        if (!isKept(child)) child.remove();
+        else if (![...keep].some(k => k === child || k.contains(child))) prune(child);
+      }
+    };
+    prune(src);
+
+    main.innerHTML = src.innerHTML;
+    // 원본 섹션 위아래 여백이 큰 경우를 대비해 조상 섹션 여백만 줄인다(.embed CSS).
+    main.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.href = FULL_SITE + a.getAttribute('href');
+      a.target = '_blank';
+      a.rel = 'noopener';
+    });
+    main.querySelectorAll('a[href]:not([href^="http"])').forEach(a => { a.target = '_blank'; });
+
+    const more = document.createElement('a');
+    more.className = 'embed-more';
+    more.href = FULL_SITE;
+    more.target = '_blank';
+    more.rel = 'noopener';
+    more.textContent = '전체 포트폴리오 보기 ↗';
+    document.body.appendChild(more);
+
+    if (main.querySelector('#tripa-player')) {
+      const s = document.createElement('script');
+      s.src = 'video.js';
+      document.body.appendChild(s);
+    }
+  }).catch(err => {
+    main.innerHTML = `<p class="embed-error">불러오지 못했습니다: ${err.message}</p>`;
+  });
+})();
+</script>
+</body>
+</html>
