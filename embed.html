@@ -15,6 +15,8 @@
   body.embed .video-section { margin: 0; }
   body.embed .game-guide { margin: 0; padding: 0; border: 0; }
   body.embed .game-screens { margin-top: 0; padding-top: 0; }
+  body.embed .game-guide-grid:has(> div:only-child) { grid-template-columns: 1fr; }
+  body.embed #tripa-update .game-guide-grid + .game-guide-grid { margin-top: 0; padding-top: 0; border-top: 0; }
   body.embed .embed-wrap { padding-top: 28px; padding-bottom: 28px; }
   .embed-more { display: block; max-width: 1200px; margin: 0 auto; padding: 0 36px 24px; text-align: right; font-size: 13px; color: inherit; opacity: .7; }
   .embed-error { padding: 40px 24px; font-family: sans-serif; }
@@ -33,7 +35,11 @@
   const PARTS = {
     'intro':          { label: '첫 화면', pick: [['section.hero']] },
     'tripa':          { label: 'TRIPA 소개', pick: [['#projects > .section-heading'], ['article.featured']] },
-    'tripa-update':   { label: 'TRIPA 개선 현황', pick: [['#tripa-update']] },
+    'tripa-update':   { label: 'TRIPA 개선 현황 (전체)', pick: [['#tripa-update']] },
+    'tripa-update-1': { label: 'TRIPA 개선 현황 1', pick: [['#tripa-update > p:not(.small)'], ['#tripa-update > h3'], ['#tripa-update > .game-guide-grid > div', 0, 0]] },
+    'tripa-update-2': { label: 'TRIPA 개선 현황 2', pick: [['#tripa-update > .game-guide-grid > div', 1, 1]] },
+    'tripa-update-3': { label: 'TRIPA 개선 현황 3', pick: [['#tripa-update > .game-guide-grid > div', 2, 2]] },
+    'tripa-update-4': { label: 'TRIPA 개선 현황 4', pick: [['#tripa-update > .game-guide-grid > div', 3, 99], ['#tripa-update > p.small']] },
     'tripa-video':    { label: 'TRIPA 소개 영상', pick: [['#tripa-video']] },
     'game':           { label: '스트라타젬 히어로 소개', pick: [['.project-card', 0, 0]] },
     'game-rules':     { label: '게임 진행 방식', pick: [['#game-guide > .section-heading'], ['#game-guide > .game-guide-grid:not(.game-ending)']] },
@@ -48,8 +54,9 @@
     'about':          { label: '자기소개', pick: [['#about']] },
     'learning-1':     { label: '학습 여정 1', pick: [['#learning > .section-heading'], ['#learning .timeline > article', 0, 2]] },
     'learning-2':     { label: '학습 여정 2', pick: [['#learning .timeline > article', 3, 99]] },
-    'notes-1':        { label: '학습 기록 1', pick: [['#notes .section-heading'], ['#notes .notes-grid > *', 0, 'half']] },
-    'notes-2':        { label: '학습 기록 2', pick: [['#notes .notes-grid > *', 'half+1', 99], ['#notes .notes-hint']] },
+    'notes-1':        { label: '학습 기록 1', pick: [['#notes .section-heading'], ['#notes .notes-grid > *', 0, 5]] },
+    'notes-2':        { label: '학습 기록 2', pick: [['#notes .notes-grid > *', 6, 11]] },
+    'notes-3':        { label: '학습 기록 3', pick: [['#notes .notes-grid > *', 12, 99], ['#notes .notes-hint']] },
   };
 
   const main = document.getElementById('main');
